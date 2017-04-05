@@ -32,9 +32,12 @@ dependencies {
     compile('com.mapbox.mapboxsdk:mapbox-android-sdk:5.0.1@aar') {
         transitive = true
     }
-    compile ('com.mapbox.mapboxsdk:mapbox-android-services:2.0.0@aar'){
-        transitive=true
-    }
+    compile('com.mapbox.mapboxsdk:mapbox-android-services:2.0.0')
+    compile 'com.mapbox.mapboxsdk:mapbox-java-core:2.0.0'
+    compile 'com.mapbox.mapboxsdk:mapbox-java-geojson:2.0.0'
+    compile 'com.mapbox.mapboxsdk:mapbox-java-services:2.0.0'
+    compile 'com.mapbox.mapboxsdk:mapbox-java-services-rx:2.0.0'
+    compile 'com.mapbox.mapboxsdk:mapbox-android-telemetry:2.0.0'
     compile 'com.android.support:appcompat-v7:25.3.0'
     compile 'com.android.support:design:25.3.0'
     compile 'com.jakewharton:butterknife:6.1.0'
@@ -48,6 +51,7 @@ dependencies {
     compile 'com.google.firebase:firebase-auth:10.2.1'
     testCompile 'junit:junit:4.12'
 }
+
 
 
 

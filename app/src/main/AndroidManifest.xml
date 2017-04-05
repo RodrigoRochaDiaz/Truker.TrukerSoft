@@ -2,9 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.rodrigo.trukertrukersoft">
 
-    <uses-sdk android:minSdkVersion="15"
-        android:targetSdkVersion="15"
-        android:maxSdkVersion="15" />
+    <uses-sdk
+        android:maxSdkVersion="15"
+        android:minSdkVersion="15"
+        android:targetSdkVersion="15" />
 
     <permission
         android:name="in.wptrafficanalyzer.locationingooglemapv2.permission.MAPS_RECEIVE"
@@ -74,7 +75,8 @@
             android:name=".activities.MyFriendMapsActivity"
             android:label="@string/title_activity_my_friend_maps" />
         <activity android:name=".activities.MyLocationActivity" />
-        <activity android:name=".activities.MyMapBoxActivity"></activity>
+        <activity android:name=".activities.MyMapBoxActivity" />
+        <activity android:name=".activities.NavigationActivity"></activity>
     </application>
 
 </manifest>

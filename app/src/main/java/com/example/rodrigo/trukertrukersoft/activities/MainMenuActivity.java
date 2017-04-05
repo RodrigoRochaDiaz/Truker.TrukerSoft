@@ -98,7 +98,7 @@ public class MainMenuActivity extends AppCompatActivity
         if (id == R.id.nav_profile) {
 
         } else if (id == R.id.nav_friends) {
-            Intent intent = new Intent(MainMenuActivity.this, MyMapBoxActivity.class);
+            Intent intent = new Intent(MainMenuActivity.this, NavigationActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_settings) {
 
