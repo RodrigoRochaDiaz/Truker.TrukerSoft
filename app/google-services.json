@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "270617796526",
+    "firebase_url": "https://truckersoftfirebase.firebaseio.com",
+    "project_id": "truckersoftfirebase",
+    "storage_bucket": "truckersoftfirebase.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:270617796526:android:076001f33a035bb2",
+        "android_client_info": {
+          "package_name": "com.example.rodrigo.trukertrukersoft"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "270617796526-t8t0ihnifr42eekrb6ost3ktq6nr50hb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.rodrigo.trukertrukersoft",
+            "certificate_hash": "e71c4efe5ee4b677fc904886613ff3c89482b421"
+          }
+        },
+        {
+          "client_id": "270617796526-9rnd38uvp5r59atpo99p996iq6p0dsks.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdskPUvQy76NGejZJUJ6CVvem8KaZfWoo"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "270617796526-9rnd38uvp5r59atpo99p996iq6p0dsks.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
