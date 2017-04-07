@@ -31,7 +31,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "LoginActivity";
     private static final int REQUEST_SIGNUP = 0;
 
-    @InjectView(R.id.input_email) EditText _emailText;
+    @InjectView(R.id.input_user) EditText _userText;
     @InjectView(R.id.input_password) EditText _passwordText;
     @InjectView(R.id.btn_login) Button _loginButton;
     @InjectView(R.id.link_signup) TextView _signupLink;
@@ -77,27 +77,14 @@ public class LoginActivity extends AppCompatActivity {
         progressDialog.setMessage("Autenticando...");
         progressDialog.show();
 
-        String user = _emailText.getText().toString();
+        String user = _userText.getText().toString();
         String password = _passwordText.getText().toString();
 
         LoginRequest loginRequest = new LoginRequest(user, password);
         loginRequest.setUsername(user);
         loginRequest.setPassword(password);
 
-
-        // TODO: Implement your own authentication logic here.
-        Intent intent = new Intent(LoginActivity.this, MainMenuActivity.class);
-        intent.putExtra("age", 30);
-        intent.putExtra("email", "rodrigo.rocha.diaz@gmail.com");
-        intent.putExtra("name", "Rodrigo Alejandro Rocha Díaz");
-        intent.putExtra("license", "ABCDE123456");
-        intent.putExtra("password", "Innova");
-        intent.putExtra("phone", "56581111");
-        intent.putExtra("user", "Rodrigo");
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-
-        /*RestAdapter restAdapter = new RestAdapter.Builder()
+        RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint("http://truckersoftservices.azurewebsites.net/api/").build();
         ITruckerSoftService service = restAdapter.create(ITruckerSoftService.class);
         service.Login(loginRequest, new Callback<LoginResponse>() {
@@ -114,6 +101,7 @@ public class LoginActivity extends AppCompatActivity {
                     intent.putExtra("password", loginResponse.getPassword());
                     intent.putExtra("phone", loginResponse.getPhone());
                     intent.putExtra("user", loginResponse.getUsername());
+                    intent.putExtra("userid", loginResponse.getUserId());
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                 }
@@ -124,10 +112,10 @@ public class LoginActivity extends AppCompatActivity {
             public void failure(RetrofitError error) {
                 Toast.makeText(getBaseContext(), error.getMessage(), Toast.LENGTH_LONG).show();
             }
-        });*/
+        });
 
 
-        /*new android.os.Handler().postDelayed(
+        new android.os.Handler().postDelayed(
                 new Runnable() {
                     public void run() {
                         // On complete call either onLoginSuccess or onLoginFailed
@@ -135,7 +123,7 @@ public class LoginActivity extends AppCompatActivity {
                         // onLoginFailed();
                         progressDialog.dismiss();
                     }
-                }, 3000);*/
+                }, 3000);
     }
 
 
@@ -171,18 +159,18 @@ public class LoginActivity extends AppCompatActivity {
     public boolean validate() {
         boolean valid = true;
 
-        String email = _emailText.getText().toString();
+        String user = _userText.getText().toString();
         String password = _passwordText.getText().toString();
 
-        if (email.isEmpty()) {// || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            _emailText.setError("Ingresar un nombre usuario válido");
+        if (user.isEmpty() || user.length() < 4 || user.length() > 10) {// || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            _userText.setError("Ingresar un nombre usuario válido");
             valid = false;
         } else {
-            _emailText.setError(null);
+            _userText.setError(null);
         }
 
         if (password.isEmpty() || password.length() < 4 || password.length() > 10) {
-            _passwordText.setError("El password debe de ser alfanumérico, entre 4 y 10 caracteres");
+            _passwordText.setError("La contraceña debe de ser alfanumérica, entre 4 y 10 caracteres");
             valid = false;
         } else {
             _passwordText.setError(null);

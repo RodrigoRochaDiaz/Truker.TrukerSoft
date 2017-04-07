@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/*import io.reactivex.android.schedulers.AndroidSchedulers;*/
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import retrofit2.Call;
@@ -122,7 +122,7 @@ public class NavigationActivity extends AppCompatActivity  {
                 .build();
         clientRx.getObservable()
                 .subscribeOn(Schedulers.newThread())
-                //.observeOn(AndroidSchedulers.mainThread())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<DirectionsResponse>() {
                     @Override
                     public void accept(DirectionsResponse response) throws Exception {

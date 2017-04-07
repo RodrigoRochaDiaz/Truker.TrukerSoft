@@ -25,4 +25,32 @@
     <string name="permission_required_toast">Location permission is required for this demo.</string>
     <!--    MapBox Settings  -->
     <string name="access_token">pk.eyJ1Ijoicm9kcmlnb21hcGJveCIsImEiOiJjajEzMGkyazEwMHRqMzJwMTVjYjI5N2puIn0.K0Y5mPV4vWtHQMUOBmmA_g</string>
+
+    <string-array name="turf_calculation_items">
+        <item>Select calculation</item>
+        <item>Bearing</item>
+        <item>Destination</item>
+        <item>Distance</item>
+        <item>Line distance</item>
+        <item>item 6</item>
+    </string-array>
+
+    <string-array name="turf_calculation_units">
+        <item>kilometers</item>
+        <item>miles</item>
+        <item>nauticalmiles</item>
+        <item>radians</item>
+        <item>degrees</item>
+        <item>inches</item>
+        <item>yards</item>
+        <item>meters</item>
+    </string-array>
+
+    <string-array name="location_engines">
+        <item>None</item>
+        <item>Mock</item>
+        <item>Android</item>
+        <item>Lost</item>
+        <item>Google Play Services</item>
+    </string-array>
 </resources>

@@ -1,82 +1,47 @@
 package com.example.rodrigo.trukertrukersoft.models;
 
-import io.realm.RealmObject;
-import io.realm.annotations.PrimaryKey;
-import io.realm.annotations.Required;
+
+import java.util.List;
 
 /**
  * Created by Rodrigo on 28/03/2017.
  */
 
-public class Person extends RealmObject {
-    @PrimaryKey
-    private int PersonId;
-    @Required
-    private String FullName;
-    @Required
-    private String Phone;
-    private short Age;
-    private int LadaId;
-    @Required
-    private String Email;
+public class Person {
+    private int id;
+    private String name;
+    private List<Geolocalization> geolocalization;
 
     public Person() {
     }
 
-    public Person(int personId, String fullName, String phone, short age, int ladaId, String email) {
-        PersonId = personId;
-        FullName = fullName;
-        Phone = phone;
-        Age = age;
-        LadaId = ladaId;
-        Email = email;
+    public Person(int id, String name, List<Geolocalization> geolocalization) {
+        this.id = id;
+        this.name = name;
+        this.geolocalization = geolocalization;
     }
 
-    public int getPersonId() {
-        return PersonId;
+    public int getId() {
+        return id;
     }
 
-    public void setPersonId(int personId) {
-        PersonId = personId;
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public String getFullName() {
-        return FullName;
+    public String getName() {
+        return name;
     }
 
-    public void setFullName(String fullName) {
-        FullName = fullName;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getPhone() {
-        return Phone;
+    public List<Geolocalization> getGeolocalization() {
+        return geolocalization;
     }
 
-    public void setPhone(String phone) {
-        Phone = phone;
-    }
-
-    public short getAge() {
-        return Age;
-    }
-
-    public void setAge(short age) {
-        Age = age;
-    }
-
-    public int getLadaId() {
-        return LadaId;
-    }
-
-    public void setLadaId(int ladaId) {
-        LadaId = ladaId;
-    }
-
-    public String getEmail() {
-        return Email;
-    }
-
-    public void setEmail(String email) {
-        Email = email;
+    public void setGeolocalization(List<Geolocalization> geolocalization) {
+        this.geolocalization = geolocalization;
     }
 }

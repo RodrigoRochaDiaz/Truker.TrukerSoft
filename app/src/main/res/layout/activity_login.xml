@@ -14,7 +14,7 @@
 
         <ImageView
             android:layout_width="wrap_content"
-            android:layout_height="200dp"
+            android:layout_height="150dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="24dp"
             android:src="@drawable/trucker_soft_logo" />
@@ -27,7 +27,7 @@
             android:layout_marginTop="8dp">
 
             <EditText
-                android:id="@+id/input_email"
+                android:id="@+id/input_user"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Usuario"
@@ -72,7 +72,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
             android:gravity="center"
-            android:text="Ley protección de dátos"
+            android:text="Ley de protección de datos"
             android:textSize="16dip" />
 
     </LinearLayout>

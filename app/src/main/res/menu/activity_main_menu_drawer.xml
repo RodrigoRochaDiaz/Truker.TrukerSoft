@@ -10,19 +10,14 @@
             android:id="@+id/nav_friends"
             android:icon="@drawable/ic_menu_share"
             android:title="Amigos" />
+        <item
+            android:id="@+id/nav_settings"
+            android:icon="@drawable/ic_menu_manage"
+            android:title="Ajustes" />
+        <item
+            android:id="@+id/nav_close"
+            android:icon="@drawable/ic_menu_send"
+            android:title="Cerrar Session" />
     </group>
-
-    <item android:title="TruckerSoft">
-        <menu>
-            <item
-                android:id="@+id/nav_settings"
-                android:icon="@drawable/ic_menu_manage"
-                android:title="Ajustes" />
-            <item
-                android:id="@+id/nav_close"
-                android:icon="@drawable/ic_menu_send"
-                android:title="Cerrar Session" />
-        </menu>
-    </item>
 
 </menu>

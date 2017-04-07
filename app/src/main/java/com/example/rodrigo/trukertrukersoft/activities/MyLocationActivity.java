@@ -2,6 +2,7 @@ package com.example.rodrigo.trukertrukersoft.activities;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -16,6 +17,7 @@ import android.widget.Toast;
 
 import com.example.rodrigo.trukertrukersoft.R;
 import com.example.rodrigo.trukertrukersoft.models.Geolocalization;
+import com.example.rodrigo.trukertrukersoft.models.Person;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -38,8 +40,10 @@ public class MyLocationActivity extends AppCompatActivity
      * @see #onRequestPermissionsResult(int, String[], int[])
      */
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
-    private static final long MIN_TIME_BW_UPDATES = 10000;
+    private static final long MIN_TIME_BW_UPDATES = 4000;
     private static final float MIN_DISTANCE_CHANGE_FOR_UPDATES = 0;
+    private int geolocalizationId = 1;
+    private int userid = 0;
 
     /**
      * Flag indicating whether a requested permission has been denied after returning in
@@ -57,6 +61,17 @@ public class MyLocationActivity extends AppCompatActivity
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        Intent myIntent = getIntent();
+
+        Person person = new Person();
+        person.setId(myIntent.getIntExtra("userid", geolocalizationId));
+        person.setName(myIntent.getStringExtra("name"));
+        userid = person.getId();
+
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("person");
+        myRef.child("" + person.getId()).setValue(person);
+        myRef.child("" + person.getId()).child("" + userid).child("geolocalization").setValue("");
     }
 
     @Override
@@ -167,11 +182,12 @@ public class MyLocationActivity extends AppCompatActivity
 
     private void FireBaseInsertGeolocalization(double latitude, double longitude){
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference("geolocalization");
+        DatabaseReference myRef = database.getReference("person");
         Geolocalization geolocalization = new Geolocalization();
-        geolocalization.setLatitude(latitude);
         geolocalization.setLongitude(longitude);
-        myRef.child("person").push().setValue(geolocalization);
+        geolocalization.setLatitude(latitude);
+        myRef.child("" + userid).child("geolocalization").child(""+ geolocalizationId).setValue(geolocalization);
+        geolocalizationId++;
     }
 
     private void MyLocation() {
@@ -235,10 +251,10 @@ public class MyLocationActivity extends AppCompatActivity
         LatLng coordinates = new LatLng(latitude, longitude);
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(coordinates)      // Sets the center of the map to Mountain View
-                .zoom(19)                   // Sets the zoom .bearing(45)                // Sets the orientation of the camera to east
-                .tilt(45)                   // Sets the tilt of the camera to 30 degrees
+                .zoom(18)                   // Sets the zoom .bearing(45)                // Sets the orientation of the camera to east
+                //.tilt(45)                   // Sets the tilt of the camera to 30 degrees
                 .build();                   // Creates a CameraPosition from the builder
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-        Toast.makeText(MyLocationActivity.this, "Latitude: " + latitude + " - Longitude: " + longitude, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(MyLocationActivity.this, "Latitude: " + latitude + " - Longitude: " + longitude, Toast.LENGTH_SHORT).show();
     }
 }

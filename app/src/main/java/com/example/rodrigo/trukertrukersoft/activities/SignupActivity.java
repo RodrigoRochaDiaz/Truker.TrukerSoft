@@ -113,6 +113,7 @@ public class SignupActivity extends AppCompatActivity {
                     intent.putExtra("password", _passwordText.getText().toString());
                     intent.putExtra("phone", _phoneText.getText().toString());
                     intent.putExtra("user", _userText.getText().toString());
+                    //intent.putExtra("userid", userRegistryResponse.getUserId());
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                 }
@@ -124,17 +125,6 @@ public class SignupActivity extends AppCompatActivity {
                 Toast.makeText(getBaseContext(), error.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
-
-       /* new android.os.Handler().postDelayed(
-                new Runnable() {
-                    public void run() {
-                        // On complete call either onSignupSuccess or onSignupFailed
-                        // depending on success
-                        onSignupSuccess();
-                        // onSignupFailed();
-                        progressDialog.dismiss();
-                    }
-                }, 3000);*/
     }
 
 

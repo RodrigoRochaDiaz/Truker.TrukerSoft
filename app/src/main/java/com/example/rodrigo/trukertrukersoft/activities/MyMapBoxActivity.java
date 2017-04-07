@@ -1,61 +1,81 @@
 package com.example.rodrigo.trukertrukersoft.activities;
 
+import android.content.Intent;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.BaseTransientBottomBar;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
+import com.example.rodrigo.trukertrukersoft.models.Geolocalization;
+import com.example.rodrigo.trukertrukersoft.models.Person;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.mapbox.mapboxsdk.Mapbox;
-import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.annotations.Polyline;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
-import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
-import com.mapbox.mapboxsdk.constants.Style;
+import com.mapbox.mapboxsdk.constants.MyLocationTracking;
 import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.location.LocationSource;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.services.Constants;
-import com.mapbox.services.api.ServicesException;
-import com.mapbox.services.api.directions.v5.DirectionsCriteria;
-import com.mapbox.services.api.directions.v5.MapboxDirections;
+import com.mapbox.services.android.navigation.v5.AlertLevelChangeListener;
+import com.mapbox.services.android.navigation.v5.MapboxNavigation;
+import com.mapbox.services.android.navigation.v5.NavigationEventListener;
+import com.mapbox.services.android.navigation.v5.ProgressChangeListener;
+import com.mapbox.services.android.telemetry.location.LocationEngine;
+import com.mapbox.services.android.telemetry.location.LocationEnginePriority;
+import com.mapbox.services.android.telemetry.permissions.PermissionsManager;
 import com.mapbox.services.api.directions.v5.models.DirectionsResponse;
 import com.mapbox.services.api.directions.v5.models.DirectionsRoute;
-import com.mapbox.services.api.directions.v5.models.LegStep;
-import com.mapbox.services.api.directions.v5.models.RouteLeg;
-import com.mapbox.services.api.navigation.v5.RouteUtils;
+import com.mapbox.services.api.navigation.v5.RouteProgress;
+import com.mapbox.services.commons.geojson.LineString;
 import com.mapbox.services.commons.models.Position;
-import com.example.rodrigo.trukertrukersoft.R;
-import com.mapbox.services.commons.utils.PolylineUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import timber.log.Timber;
+
+import static com.mapbox.mapboxsdk.maps.MapboxMap.OnMapClickListener;
+import static com.mapbox.services.android.Constants.ARRIVE_ALERT_LEVEL;
+import static com.mapbox.services.android.Constants.DEPART_ALERT_LEVEL;
+import static com.mapbox.services.android.Constants.HIGH_ALERT_LEVEL;
+import static com.mapbox.services.android.Constants.LOW_ALERT_LEVEL;
+import static com.mapbox.services.android.Constants.MEDIUM_ALERT_LEVEL;
+import static com.mapbox.services.android.Constants.NONE_ALERT_LEVEL;
+import com.example.rodrigo.trukertrukersoft.R;
 
 
-public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMapClickListener,
+        ProgressChangeListener, NavigationEventListener, AlertLevelChangeListener {
 
-    private static final String LOG_TAG = "RouteUtilsV5Activity";
+    // Map variables
+    private MapView mapView;
+    private Polyline routeLine;
+    private MapboxMap mapboxMap;
+    private Marker destinationMarker;
 
-    private MapView mapView = null;
-    private MapboxMap mapboxMap = null;
-
-    private LatLng from = null;
-    private LatLng to = null;
-    private DirectionsRoute currentRoute = null;
-
-    private Icon tapIcon;
-    private Marker userTap = null;
-    private List<Polyline> snapLines = null;
+    // Navigation related variables
+    private LocationEngine locationEngine;
+    private MapboxNavigation navigation;
+    private Button startRouteButton;
+    private DirectionsRoute route;
+    private int geolocalizationId = 1;
+    private int userid = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,185 +83,180 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
         Mapbox.getInstance(this, getString(R.string.access_token));
         setContentView(R.layout.activity_my_map_box);
 
-        tapIcon = Utils.drawableToIcon(this, R.drawable.ic_my_location_black_24dp);
 
-        // Set up a standard Mapbox map
-        mapView = (MapView) findViewById(R.id.mapview);
+        startRouteButton = (Button) findViewById(R.id.startRouteButton);
+        startRouteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (navigation != null && route != null) {
+
+                    // Hide the start button
+                    startRouteButton.setVisibility(View.INVISIBLE);
+
+                    // Attach all of our navigation listeners.
+                    navigation.setNavigationEventListener(MyMapBoxActivity.this);
+                    navigation.setProgressChangeListener(MyMapBoxActivity.this);
+                    navigation.setAlertLevelChangeListener(MyMapBoxActivity.this);
+
+                    // Adjust location engine to force a gps reading every second. This isn't required but gives an overall
+                    // better navigation experience for users. The updating only occurs if the user moves 3 meters or further
+                    // from the last update.
+                    //locationEngine.setInterval(0);
+                    //locationEngine.setSmallestDisplacement(3.0f);
+                    locationEngine.setPriority(LocationEnginePriority.HIGH_ACCURACY);
+                    //locationEngine.setFastestInterval(1000);
+
+                    navigation.setLocationEngine(locationEngine);
+                    navigation.startNavigation(route);
+                }
+            }
+        });
+
+        mapView = (MapView) findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
+
+
+        locationEngine = LocationSource.getLocationEngine(this);
+
+        navigation = new MapboxNavigation(this, Mapbox.getAccessToken());
+
         mapView.getMapAsync(this);
+
+        Intent myIntent = getIntent();
+
+        Person person = new Person();
+        person.setId(myIntent.getIntExtra("userid", geolocalizationId));
+        person.setName(myIntent.getStringExtra("name"));
+        userid = person.getId();
+
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("person");
+        myRef.child("" + person.getId()).setValue(person);
+        myRef.child("" + person.getId()).child("" + userid).child("geolocalization").setValue("");
     }
 
     @Override
     public void onMapReady(MapboxMap mapboxMap) {
         this.mapboxMap = mapboxMap;
+        mapboxMap.setOnMapClickListener(this);
+        Snackbar.make(mapView, "Tap map to place destination", BaseTransientBottomBar.LENGTH_LONG).show();
 
-        mapboxMap.setStyleUrl(Style.MAPBOX_STREETS);
+        mapboxMap.moveCamera(CameraUpdateFactory.zoomBy(12));
 
-        // Dupont Circle
-        LatLng target = new LatLng(38.90962, -77.04341);
-
-        // Move map
-        CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(target)
-                .zoom(14)
-                .build();
-        mapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-
-        mapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
-            @Override
-            public void onMapClick(@NonNull LatLng point) {
-                if (from == null) {
-                    setFrom(point);
-                } else if (to == null) {
-                    setTo(point);
-                } else {
-                    doUtils(point);
-                }
-            }
-        });
-    }
-
-    private void setFrom(LatLng point) {
-        from = point;
-        mapboxMap.addMarker(new MarkerOptions()
-                .position(point)
-                .title("From"));
-    }
-
-    private void setTo(LatLng point) {
-        to = point;
-        mapboxMap.addMarker(new MarkerOptions()
-                .position(point)
-                .title("To"));
-
-        getRoute(Position.fromCoordinates(from.getLongitude(), from.getLatitude()),
-                Position.fromCoordinates(to.getLongitude(), to.getLatitude()));
-    }
-
-    private void doUtils(LatLng point) {
-        // Remove previous
-        if (userTap != null) {
-            mapboxMap.removeMarker(userTap);
-        }
-
-        userTap = mapboxMap.addMarker(new MarkerOptions().position(point).setIcon(tapIcon));
-
-        RouteUtils routeUtils = new RouteUtils();
-        RouteLeg route = currentRoute.getLegs().get(0);
-        Position position = Position.fromCoordinates(point.getLongitude(), point.getLatitude());
-
-        // General situational message
-        String message = String.format(Locale.US, "You're closest to step %d/%d (%s)",
-                routeUtils.getClosestStep(position, route) + 1,
-                route.getSteps().size(),
-                routeUtils.isOffRoute(position, route) ? "off-route" : "not off-route");
-        showMessage(message);
-
-        // Remove previous lines
-        if (snapLines != null && snapLines.size() > 0) {
-            for (Polyline snapLine : snapLines) {
-                mapboxMap.removePolyline(snapLine);
-            }
-        }
-
-        // Draw snap to route lines
-        snapLines = new ArrayList<>();
-        for (int stepIndex = 0; stepIndex < route.getSteps().size(); stepIndex++) {
-            Position snapPoint = RouteUtils.getSnapToRoute(position, route, stepIndex);
-            LatLng[] points = new LatLng[] {
-                    point,
-                    new LatLng(snapPoint.getLatitude(), snapPoint.getLongitude())};
-            snapLines.add(mapboxMap.addPolyline(new PolylineOptions()
-                    .add(points)
-                    .color(Color.parseColor("#f9886c"))
-                    .width(2)));
-        }
-
-        // Log some extra info
-        for (int stepIndex = 0; stepIndex < route.getSteps().size(); stepIndex++) {
-            Log.d(LOG_TAG, String.format("Step %d: in step = %b, distance = %.1fkm",
-                    stepIndex + 1,
-                    routeUtils.isInStep(position, route, stepIndex),
-                    routeUtils.getDistanceToStep(position, route, stepIndex)));
+        if (PermissionsManager.areLocationPermissionsGranted(this)) {
+            mapboxMap.setMyLocationEnabled(true);
+            mapboxMap.getTrackingSettings().setMyLocationTrackingMode(MyLocationTracking.TRACKING_FOLLOW);
         }
     }
 
-    private void getRoute(Position origin, Position destination) throws ServicesException {
-        ArrayList<Position> positions = new ArrayList<>();
-        positions.add(origin);
-        positions.add(destination);
+    @Override
+    public void onMapClick(@NonNull LatLng point) {
+        if (destinationMarker != null) {
+            mapboxMap.removeMarker(destinationMarker);
+        }
+        destinationMarker = mapboxMap.addMarker(new MarkerOptions().position(point));
 
-        MapboxDirections client = new MapboxDirections.Builder()
-                .setAccessToken(Utils.getMapboxAccessToken(this))
-                .setCoordinates(positions)
-                .setProfile(DirectionsCriteria.PROFILE_DRIVING)
-                .setSteps(true)
-                .setOverview(DirectionsCriteria.OVERVIEW_FULL)
-                .build();
+        startRouteButton.setVisibility(View.VISIBLE);
+        calculateRoute(Position.fromCoordinates(point.getLongitude(), point.getLatitude()));
+    }
 
-        client.enqueueCall(new Callback<DirectionsResponse>() {
+    private void drawRouteLine(DirectionsRoute route) {
+        List<Position> positions = LineString.fromPolyline(route.getGeometry(), Constants.PRECISION_6).getCoordinates();
+        List<LatLng> latLngs = new ArrayList<>();
+        for (Position position : positions) {
+            latLngs.add(new LatLng(position.getLatitude(), position.getLongitude()));
+        }
+
+        // Remove old route if currently being shown on map.
+        if (routeLine != null) {
+            mapboxMap.removePolyline(routeLine);
+        }
+
+        routeLine = mapboxMap.addPolyline(new PolylineOptions()
+                .addAll(latLngs)
+                .color(Color.parseColor("#56b881"))
+                .width(5f));
+    }
+
+    private void calculateRoute(Position destination) {
+        Location userLocation = mapboxMap.getMyLocation();
+        if (userLocation == null) {
+            Timber.d("calculateRoute: User location is null, therefore, origin can't be set.");
+            return;
+        }
+
+        navigation.setOrigin(Position.fromCoordinates(userLocation.getLongitude(), userLocation.getLatitude()));
+        navigation.setDestination(destination);
+        navigation.getRoute(new Callback<DirectionsResponse>() {
             @Override
             public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
-                // You can get generic HTTP info about the response
-                Log.d(LOG_TAG, "Response code: " + response.code());
-                if (response.body() == null) {
-                    Log.e(LOG_TAG, "No routes found, make sure you set the right user and access token.");
-                    return;
-                }
+                DirectionsRoute route = response.body().getRoutes().get(0);
+                MyMapBoxActivity.this.route = route;
+                drawRouteLine(route);
 
-                // Print some info about the route
-                currentRoute = response.body().getRoutes().get(0);
-                Log.d(LOG_TAG, "Distance: " + currentRoute.getDistance());
-                showMessage(String.format(Locale.US, "Route has %d steps and it's %.1f meters long.",
-                        currentRoute.getLegs().get(0).getSteps().size(),
-                        currentRoute.getDistance()));
-
-                // Draw the route on the map
-                drawRoute(currentRoute);
             }
 
             @Override
             public void onFailure(Call<DirectionsResponse> call, Throwable throwable) {
-                Log.e(LOG_TAG, "Error: " + throwable.getMessage());
-                showMessage("Error: " + throwable.getMessage());
+                Timber.e("onFailure: navigation.getRoute()", throwable);
             }
         });
     }
 
-    private void drawRoute(DirectionsRoute route) {
-        // We're gonna draw each step in an alternating color
-        String[] colors = new String[] {"#3887be", "#56b881"}; // Blue, green
+  /*
+   * Navigation listeners
+   */
 
-        List<Position> coordinates;
-        LatLng[] points;
-        int colorIndex = 0;
-        for (int i = 0; i < route.getLegs().get(0).getSteps().size(); i++) {
-            LegStep step = route.getLegs().get(0).getSteps().get(i);
-            coordinates = PolylineUtils.decode(step.getGeometry(), Constants.OSRM_PRECISION_V5);
-            points = new LatLng[coordinates.size()];
-            for (int j = 0; j < coordinates.size(); j++) {
-                points[j] = new LatLng(
-                        coordinates.get(j).getLatitude(),
-                        coordinates.get(j).getLongitude());
-            }
-
-            colorIndex ^= 1;
-            mapboxMap.addPolyline(new PolylineOptions()
-                    .add(points)
-                    .color(Color.parseColor(colors[colorIndex]))
-                    .width(5));
+    @Override
+    public void onRunning(boolean running) {
+        if (running) {
+            Timber.d("onRunning: Started");
+        } else {
+            Timber.d("onRunning: Stopped");
         }
     }
 
-    private void showMessage(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    @Override
+    public void onProgressChange(Location location, RouteProgress routeProgress) {
+        //Timber.d("onProgressChange: fraction of route traveled: %d", routeProgress.getFractionTraveled());
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("person");
+        Geolocalization geolocalization = new Geolocalization();
+        geolocalization.setLongitude(location.getLongitude());
+        geolocalization.setLatitude(location.getLatitude());
+        myRef.child("" + userid).child("geolocalization").child(""+ geolocalizationId).setValue(geolocalization);
+        //geolocalizationId++;
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        mapView.onStart();
+    public void onAlertLevelChange(int alertLevel, RouteProgress routeProgress) {
+
+        switch (alertLevel) {
+            case HIGH_ALERT_LEVEL:
+                Toast.makeText(MyMapBoxActivity.this, "HIGH", Toast.LENGTH_LONG).show();
+                break;
+            case MEDIUM_ALERT_LEVEL:
+                Toast.makeText(MyMapBoxActivity.this, "MEDIUM", Toast.LENGTH_LONG).show();
+                break;
+            case LOW_ALERT_LEVEL:
+                Toast.makeText(MyMapBoxActivity.this, "LOW", Toast.LENGTH_LONG).show();
+                break;
+            case ARRIVE_ALERT_LEVEL:
+                Toast.makeText(MyMapBoxActivity.this, "ARRIVE", Toast.LENGTH_LONG).show();
+                break;
+            case DEPART_ALERT_LEVEL:
+                Toast.makeText(MyMapBoxActivity.this, "DEPART", Toast.LENGTH_LONG).show();
+                break;
+            default:
+            case NONE_ALERT_LEVEL:
+                Toast.makeText(MyMapBoxActivity.this, "NONE", Toast.LENGTH_LONG).show();
+                break;
+        }
     }
+
+  /*
+   * Activity lifecycle methods
+   */
 
     @Override
     public void onResume() {
@@ -256,15 +271,23 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        mapView.onSaveInstanceState(outState);
+    protected void onStart() {
+        super.onStart();
+        navigation.onStart();
+        mapView.onStart();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        navigation.onStop();
         mapView.onStop();
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapView.onLowMemory();
     }
 
     @Override
@@ -274,8 +297,8 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
     }
 
     @Override
-    public void onLowMemory() {
-        super.onLowMemory();
-        mapView.onLowMemory();
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mapView.onSaveInstanceState(outState);
     }
 }

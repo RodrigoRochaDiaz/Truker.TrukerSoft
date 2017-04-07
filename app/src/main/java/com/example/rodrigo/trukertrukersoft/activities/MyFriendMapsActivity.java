@@ -7,12 +7,14 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
 import com.example.rodrigo.trukertrukersoft.R;
 import com.example.rodrigo.trukertrukersoft.models.Geolocalization;
+import com.example.rodrigo.trukertrukersoft.models.Person;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -23,11 +25,20 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
 
 public class MyFriendMapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -37,6 +48,7 @@ public class MyFriendMapsActivity extends FragmentActivity implements OnMapReady
     private Marker marker;
     private double lat = 0.0;
     private double lng = 0.0;
+    private int geolocalizationId = 1;
 
 
     @Override
@@ -47,6 +59,12 @@ public class MyFriendMapsActivity extends FragmentActivity implements OnMapReady
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("person");
+        Person person = new Person();
+        person.setId(1);
+        person.setName("Rodrigo Alejandro Rocha Diaz");
+        myRef.child("1").setValue(person);
         /*FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference myRef = database.getReference("geolocalization");
         myRef.child("person").addValueEventListener(new ValueEventListener() {
@@ -98,11 +116,12 @@ public class MyFriendMapsActivity extends FragmentActivity implements OnMapReady
             lat = location.getLatitude();
             lng = location.getLongitude();
             FirebaseDatabase database = FirebaseDatabase.getInstance();
-            DatabaseReference myRef = database.getReference("geolocalization");
+            DatabaseReference myRef = database.getReference("person");
             Geolocalization geolocalization = new Geolocalization();
-            geolocalization.setLatitude(lat);
             geolocalization.setLongitude(lng);
-            myRef.child("person").push().setValue(geolocalization);
+            geolocalization.setLatitude(lat);
+            myRef.child("1").child("geolocalization").child(""+ geolocalizationId).setValue(geolocalization);
+            geolocalizationId++;
             AddMark(lat, lng);
         }
     }

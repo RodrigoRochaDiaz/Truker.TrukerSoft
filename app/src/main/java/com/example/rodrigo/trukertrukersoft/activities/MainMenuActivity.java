@@ -19,13 +19,17 @@ import com.example.rodrigo.trukertrukersoft.R;
 
 public class MainMenuActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+    private String name = "";
+    private String email = "";
+    private int userid = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent myIntent = getIntent();
-        final String name = myIntent.getStringExtra("name");
-        final String email = myIntent.getStringExtra("email");
+        name = myIntent.getStringExtra("name");
+        email = myIntent.getStringExtra("email");
+        userid = myIntent.getIntExtra("userid", userid);
 
         setContentView(R.layout.activity_main_menu);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -98,7 +102,10 @@ public class MainMenuActivity extends AppCompatActivity
         if (id == R.id.nav_profile) {
 
         } else if (id == R.id.nav_friends) {
-            Intent intent = new Intent(MainMenuActivity.this, NavigationActivity.class);
+            Intent intent = new Intent(MainMenuActivity.this, MyMapBoxActivity.class);
+            intent.putExtra("name", name);
+            intent.putExtra("userid", userid);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
         } else if (id == R.id.nav_settings) {
 
