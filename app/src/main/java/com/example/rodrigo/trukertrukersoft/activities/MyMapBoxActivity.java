@@ -174,7 +174,6 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference myRef = database.getReference("person");
         myRef.child("" + person.getId()).setValue(person);
-        myRef.child("" + person.getId()).child("" + userid).child("geolocalization").setValue("");
     }
 
     @Override
