@@ -144,29 +144,69 @@ public class SignupActivity extends AppCompatActivity {
         boolean valid = true;
 
         String name = _nameText.getText().toString();
+        String age = _ageText.getText().toString();
+        String phone = _phoneText.getText().toString();
+        String license = _carnetText.getText().toString();
         String email = _emailText.getText().toString();
         String password = _passwordText.getText().toString();
+        String passwordconfirm = _passwordConfirmText.getText().toString();
+        String user = _userText.getText().toString();
 
-        if (name.isEmpty() || name.length() < 3) {
-            _nameText.setError("Nombre mayor a 3 caracteres");
+        if (user.isEmpty() || user.length() < 5) {
+            _userText.setError("Nombre de suario incorrecto, debe de ser mayor a 5 caracteres");
+            valid = false;
+        } else {
+            _userText.setError(null);
+        }
+
+        if (name.isEmpty() || name.length() < 5) {
+            _nameText.setError("Nombre debe de ser mayor a 5 caracteres");
             valid = false;
         } else {
             _nameText.setError(null);
         }
 
-//        if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-//            _emailText.setError("enter a valid email address");
-//            valid = false;
-//        } else {
-//            _emailText.setError(null);
-//        }
-//
-//        if (password.isEmpty() || password.length() < 4 || password.length() > 10) {
-//            _passwordText.setError("between 4 and 10 alphanumeric characters");
-//            valid = false;
-//        } else {
-//            _passwordText.setError(null);
-//        }
+        if (age.isEmpty()) {
+            _ageText.setError("El campo edad es obligatorio");
+            valid = false;
+        } else {
+            _ageText.setError(null);
+        }
+
+        if (phone.isEmpty() && phone.length() < 10) {
+            _phoneText.setError("El campo teléfono es obligatorio, mayor de 10");
+            valid = false;
+        } else {
+            _phoneText.setError(null);
+        }
+
+        if (license.isEmpty()) {
+            _carnetText.setError("El campo carnet es obligatorio");
+            valid = false;
+        } else {
+            _carnetText.setError(null);
+        }
+
+        if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            _emailText.setError("Ingresa un correo válido");
+            valid = false;
+        } else {
+            _emailText.setError(null);
+        }
+
+        if (password.isEmpty() || password.length() < 4 || password.length() > 10) {
+            _passwordText.setError("La contraseña es incorrecta, mayor a 4 caracteres y menor de 10 caracteres");
+            valid = false;
+        } else {
+            _passwordText.setError(null);
+        }
+
+        if (passwordconfirm.isEmpty() || !password.equals(passwordconfirm)) {
+            _passwordConfirmText.setError("la confirmación de contraseña es incorrecta");
+            valid = false;
+        } else {
+            _passwordConfirmText.setError(null);
+        }
 
         return valid;
     }

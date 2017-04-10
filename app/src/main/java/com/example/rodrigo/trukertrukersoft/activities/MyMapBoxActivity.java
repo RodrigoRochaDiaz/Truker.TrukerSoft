@@ -1,14 +1,20 @@
 package com.example.rodrigo.trukertrukersoft.activities;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BaseTransientBottomBar;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -21,23 +27,29 @@ import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.annotations.Polyline;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
+import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.constants.MyLocationTracking;
+import com.mapbox.mapboxsdk.constants.Style;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.location.LocationSource;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.services.Constants;
+import com.mapbox.services.android.location.LostLocationEngine;
 import com.mapbox.services.android.navigation.v5.AlertLevelChangeListener;
 import com.mapbox.services.android.navigation.v5.MapboxNavigation;
 import com.mapbox.services.android.navigation.v5.NavigationEventListener;
 import com.mapbox.services.android.navigation.v5.ProgressChangeListener;
 import com.mapbox.services.android.telemetry.location.LocationEngine;
+import com.mapbox.services.android.telemetry.location.LocationEngineListener;
 import com.mapbox.services.android.telemetry.location.LocationEnginePriority;
 import com.mapbox.services.android.telemetry.permissions.PermissionsManager;
 import com.mapbox.services.api.directions.v5.models.DirectionsResponse;
 import com.mapbox.services.api.directions.v5.models.DirectionsRoute;
+import com.mapbox.services.api.geocoding.v5.GeocodingCriteria;
+import com.mapbox.services.api.geocoding.v5.models.CarmenFeature;
 import com.mapbox.services.api.navigation.v5.RouteProgress;
 import com.mapbox.services.commons.geojson.LineString;
 import com.mapbox.services.commons.models.Position;
@@ -57,11 +69,16 @@ import static com.mapbox.services.android.Constants.HIGH_ALERT_LEVEL;
 import static com.mapbox.services.android.Constants.LOW_ALERT_LEVEL;
 import static com.mapbox.services.android.Constants.MEDIUM_ALERT_LEVEL;
 import static com.mapbox.services.android.Constants.NONE_ALERT_LEVEL;
+
 import com.example.rodrigo.trukertrukersoft.R;
+import com.mapbox.services.android.ui.geocoder.GeocoderAutoCompleteView;
 
 
 public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCallback, MapboxMap.OnMapClickListener,
-        ProgressChangeListener, NavigationEventListener, AlertLevelChangeListener {
+        ProgressChangeListener, NavigationEventListener, AlertLevelChangeListener, LocationEngineListener {
+
+    private static final String LOG_TAG = "MyMapBoxActivity";
+    private GeocoderAutoCompleteView autocomplete;
 
     // Map variables
     private MapView mapView;
@@ -76,6 +93,7 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
     private DirectionsRoute route;
     private int geolocalizationId = 1;
     private int userid = 0;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,18 +130,42 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
             }
         });
 
+        // Set up autocomplete widget
+        autocomplete = (GeocoderAutoCompleteView) findViewById(R.id.query);
+        autocomplete.setAccessToken(Utils.getMapboxAccessToken(this));
+        autocomplete.setType(GeocodingCriteria.TYPE_POI);
+        autocomplete.setLimit(10);
+        autocomplete.setVisibility(View.VISIBLE);
+        autocomplete.setOnFeatureListener(new GeocoderAutoCompleteView.OnFeatureListener() {
+            @Override
+            public void onFeatureClick(CarmenFeature feature) {
+                Position position = feature.asPosition();
+                updateMap(position.getLatitude(), position.getLongitude());
+            }
+        });
+
+        // Set up map
         mapView = (MapView) findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
+        mapView.getMapAsync(this);
+//        mapView.getMapAsync(new OnMapReadyCallback() {
+//            @Override
+//            public void onMapReady(MapboxMap mapboxMapReady) {
+//                mapboxMap = mapboxMapReady;
+//                mapboxMap.setStyleUrl(Style.MAPBOX_STREETS);
+//            }
+//        });
 
+        // Set up location services to improve accuracy
+        locationEngine = LostLocationEngine.getLocationEngine(this);
+        locationEngine.addLocationEngineListener(this);
+        locationEngine.activate();
 
-        locationEngine = LocationSource.getLocationEngine(this);
 
         navigation = new MapboxNavigation(this, Mapbox.getAccessToken());
 
-        mapView.getMapAsync(this);
 
         Intent myIntent = getIntent();
-
         Person person = new Person();
         person.setId(myIntent.getIntExtra("userid", geolocalizationId));
         person.setName(myIntent.getStringExtra("name"));
@@ -136,12 +178,61 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
     }
 
     @Override
+    public void onConnected() {
+        Log.d(LOG_TAG, "Connected to engine, we can now request updates.");
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        locationEngine.requestLocationUpdates();
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        if (location != null) {
+            Log.d(LOG_TAG, "New LOST location: " + location.toString());
+            autocomplete.setProximity(Position.fromCoordinates(
+                    location.getLongitude(), location.getLatitude()));
+        }
+    }
+
+    private void updateMap(double latitude, double longitude) {
+
+        if (destinationMarker != null) {
+            mapboxMap.removeMarker(destinationMarker);
+        }
+
+        // Marker
+        destinationMarker = mapboxMap.addMarker(new MarkerOptions()
+                .position(new LatLng(latitude, longitude)));
+
+        // Animate map
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(new LatLng(latitude, longitude))
+                .zoom(15)
+                .build();
+        mapboxMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 5000, null);
+
+        startRouteButton.setVisibility(View.VISIBLE);
+        calculateRoute(Position.fromCoordinates(longitude, latitude));
+
+        hideSoftKeyboard(this);
+        startRouteButton.requestFocus();
+    }
+
+    @Override
     public void onMapReady(MapboxMap mapboxMap) {
         this.mapboxMap = mapboxMap;
         mapboxMap.setOnMapClickListener(this);
         Snackbar.make(mapView, "Tap map to place destination", BaseTransientBottomBar.LENGTH_LONG).show();
 
-        mapboxMap.moveCamera(CameraUpdateFactory.zoomBy(12));
+        mapboxMap.moveCamera(CameraUpdateFactory.zoomBy(15));
 
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
             mapboxMap.setMyLocationEnabled(true);
@@ -224,7 +315,7 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
         Geolocalization geolocalization = new Geolocalization();
         geolocalization.setLongitude(location.getLongitude());
         geolocalization.setLatitude(location.getLatitude());
-        myRef.child("" + userid).child("geolocalization").child(""+ geolocalizationId).setValue(geolocalization);
+        myRef.child("" + userid).child("geolocalization").child("" + geolocalizationId).setValue(geolocalization);
         //geolocalizationId++;
     }
 
@@ -262,12 +353,30 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
     public void onResume() {
         super.onResume();
         mapView.onResume();
+        if (locationEngine != null && locationEngine.isConnected()) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+            locationEngine.requestLocationUpdates();
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
         mapView.onPause();
+        if (locationEngine != null) {
+            locationEngine.removeLocationUpdates();
+            locationEngine.removeLocationEngineListener(this);
+            locationEngine.deactivate();
+        }
     }
 
     @Override
@@ -293,6 +402,7 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        autocomplete.cancelApiCall();
         mapView.onDestroy();
     }
 
@@ -300,5 +410,13 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         mapView.onSaveInstanceState(outState);
+    }
+
+    public static void hideSoftKeyboard(Activity activity) {
+        InputMethodManager inputMethodManager =
+                (InputMethodManager) activity.getSystemService(
+                        Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(
+                activity.getCurrentFocus().getWindowToken(), 0);
     }
 }
