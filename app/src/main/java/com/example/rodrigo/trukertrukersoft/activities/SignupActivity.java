@@ -113,7 +113,7 @@ public class SignupActivity extends AppCompatActivity {
                     intent.putExtra("password", _passwordText.getText().toString());
                     intent.putExtra("phone", _phoneText.getText().toString());
                     intent.putExtra("user", _userText.getText().toString());
-                    //intent.putExtra("userid", userRegistryResponse.getUserId());
+                    intent.putExtra("userid", userRegistryResponse.getUserId());
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                 }
@@ -153,7 +153,7 @@ public class SignupActivity extends AppCompatActivity {
         String user = _userText.getText().toString();
 
         if (user.isEmpty() || user.length() < 5) {
-            _userText.setError("Nombre de suario incorrecto, debe de ser mayor a 5 caracteres");
+            _userText.setError("Nombre de usuario incorrecto, debe de ser mayor a 5 caracteres");
             valid = false;
         } else {
             _userText.setError(null);

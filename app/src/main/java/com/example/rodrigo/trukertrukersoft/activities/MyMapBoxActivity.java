@@ -85,6 +85,7 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
     private Polyline routeLine;
     private MapboxMap mapboxMap;
     private Marker destinationMarker;
+    private Position position;
 
     // Navigation related variables
     private LocationEngine locationEngine;
@@ -139,7 +140,7 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
         autocomplete.setOnFeatureListener(new GeocoderAutoCompleteView.OnFeatureListener() {
             @Override
             public void onFeatureClick(CarmenFeature feature) {
-                Position position = feature.asPosition();
+                position = feature.asPosition();
                 updateMap(position.getLatitude(), position.getLongitude());
             }
         });
@@ -178,7 +179,7 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
 
     @Override
     public void onConnected() {
-        Log.d(LOG_TAG, "Connected to engine, we can now request updates.");
+        Log.d(LOG_TAG, "\n" + "Conectado al motor");
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -195,7 +196,7 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
     @Override
     public void onLocationChanged(Location location) {
         if (location != null) {
-            Log.d(LOG_TAG, "New LOST location: " + location.toString());
+            Log.d(LOG_TAG, "Nueva ubicación perdida: " + location.toString());
             autocomplete.setProximity(Position.fromCoordinates(
                     location.getLongitude(), location.getLatitude()));
         }
@@ -214,7 +215,7 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
         // Animate map
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(new LatLng(latitude, longitude))
-                .zoom(15)
+                .zoom(14)
                 .build();
         mapboxMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 5000, null);
 
@@ -229,9 +230,9 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
     public void onMapReady(MapboxMap mapboxMap) {
         this.mapboxMap = mapboxMap;
         mapboxMap.setOnMapClickListener(this);
-        Snackbar.make(mapView, "Tap map to place destination", BaseTransientBottomBar.LENGTH_LONG).show();
+        Snackbar.make(mapView, "\n" + "Toca el mapa para ubicar el destino", BaseTransientBottomBar.LENGTH_LONG).show();
 
-        mapboxMap.moveCamera(CameraUpdateFactory.zoomBy(15));
+        mapboxMap.moveCamera(CameraUpdateFactory.zoomBy(14));
 
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
             mapboxMap.setMyLocationEnabled(true);
@@ -271,7 +272,7 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
     private void calculateRoute(Position destination) {
         Location userLocation = mapboxMap.getMyLocation();
         if (userLocation == null) {
-            Timber.d("calculateRoute: User location is null, therefore, origin can't be set.");
+            Timber.d("calculateRoute: \n" + "La ubicación del usuario es nula, por lo tanto, no se puede establecer el origen.");
             return;
         }
 
@@ -315,6 +316,7 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
         geolocalization.setLongitude(location.getLongitude());
         geolocalization.setLatitude(location.getLatitude());
         myRef.child("" + userid).child("geolocalization").child("" + geolocalizationId).setValue(geolocalization);
+        calculateRoute(position);
         //geolocalizationId++;
     }
 
@@ -323,23 +325,23 @@ public class MyMapBoxActivity extends AppCompatActivity implements OnMapReadyCal
 
         switch (alertLevel) {
             case HIGH_ALERT_LEVEL:
-                Toast.makeText(MyMapBoxActivity.this, "HIGH", Toast.LENGTH_LONG).show();
+                //Toast.makeText(MyMapBoxActivity.this, "HIGH", Toast.LENGTH_LONG).show();
                 break;
             case MEDIUM_ALERT_LEVEL:
-                Toast.makeText(MyMapBoxActivity.this, "MEDIUM", Toast.LENGTH_LONG).show();
+                //Toast.makeText(MyMapBoxActivity.this, "MEDIUM", Toast.LENGTH_LONG).show();
                 break;
             case LOW_ALERT_LEVEL:
-                Toast.makeText(MyMapBoxActivity.this, "LOW", Toast.LENGTH_LONG).show();
+                //Toast.makeText(MyMapBoxActivity.this, "LOW", Toast.LENGTH_LONG).show();
                 break;
             case ARRIVE_ALERT_LEVEL:
-                Toast.makeText(MyMapBoxActivity.this, "ARRIVE", Toast.LENGTH_LONG).show();
+                //Toast.makeText(MyMapBoxActivity.this, "ARRIVE", Toast.LENGTH_LONG).show();
                 break;
             case DEPART_ALERT_LEVEL:
-                Toast.makeText(MyMapBoxActivity.this, "DEPART", Toast.LENGTH_LONG).show();
+                //Toast.makeText(MyMapBoxActivity.this, "DEPART", Toast.LENGTH_LONG).show();
                 break;
             default:
             case NONE_ALERT_LEVEL:
-                Toast.makeText(MyMapBoxActivity.this, "NONE", Toast.LENGTH_LONG).show();
+                //Toast.makeText(MyMapBoxActivity.this, "NONE", Toast.LENGTH_LONG).show();
                 break;
         }
     }
